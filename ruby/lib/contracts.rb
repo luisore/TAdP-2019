@@ -32,14 +32,22 @@ module Contracts
 end
 
 module TestModule
+  include Contracts;
+  
+  before_and_after_each_call(proc{ puts 'Before from module' },  proc{ puts 'After from module' })
+  
   def aModuleMethod
-    'Module Method'
+    'A Module Method'
   end
 end
 
 class ParentTestClass
+  include Contracts;
+  
+  before_and_after_each_call(proc{ puts 'Before from parent' },  proc{ puts 'After from parent' })
+  
   def aParentMethod
-    'a parent method'
+    'A Parent Method'
   end
 end
 
@@ -47,10 +55,12 @@ class TestClass < ParentTestClass
   include Contracts
   include TestModule
   
-  before_and_after_each_call(proc{ puts 'Entré a un mensaje' },  proc{ puts 'Salí de un mensaje' })
-  before_and_after_each_call(proc{ puts 'Entré a un mensaje2' },  proc{ puts 'Salí de un mensaje2' })
+  before_and_after_each_call(proc{ puts 'Before 1' },  proc{ puts 'After 1' })
+  before_and_after_each_call(proc{ puts 'Before 2' },  proc{ puts 'After 2' })
   
   def aMethod
-    'Class Method'
+    'A Class Method'
   end
+  
+  
 end
