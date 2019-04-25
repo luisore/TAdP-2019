@@ -11,7 +11,7 @@ class M
 
     define_method("#{attr}=") do |val|
       instance_variable_set("@#{attr}", val)
-      if(instance_eval(&self.invariant))
+      if(!instance_eval(&self.invariant))
         raise 'no puede ser'
       end
     end
