@@ -1,70 +1,137 @@
+class BlocksManager
+  def initialize
+    #Estos dos diccionarios van a almacenar los procs que voy a querer ejecutar en los contratos
+    #Son diccionarios que adentro tienen arrays/listas/como se llamen en ruby
+    @beforeBlocks = Hash.new
+    @afterBlocks = Hash.new
+    
+    @unassignedBeforeBlocks = Hash.new
+    @unassignedAfterBlocks = Hash.new
+    
+    @singleBeforeBlocks = Hash.new
+    @singleAfterBlocks = Hash.new
+  end
+  
+  def beforeBlockPush(beforeBlock, key)
+    if(!@beforeBlocks[key])
+      @beforeBlocks[key] = []
+    end
+    @beforeBlocks[key].push(beforeBlock)
+  end
+  
+  def afterBlockPush(afterBlock, key)
+    if(!@afterBlocks[key])
+      @afterBlocks[key] = []
+    end
+    @afterBlocks[key].push(afterBlock)
+  end
+  
+  def unassignedBeforeBlockPush(beforeBlock, key)
+    if(!@unassignedBeforeBlocks[key])
+      @unassignedBeforeBlocks[key] = []
+    end
+    @unassignedBeforeBlocks[key].push(beforeBlock)
+  end
+  
+  def unassignedAfterBlockPush(afterBlock, key)
+    if(!@unassignedAfterBlocks[key])
+      @unassignedAfterBlocks[key] = []
+    end
+    @unassignedAfterBlocks[key].push(afterBlock)
+  end
+  
+  def singleBeforeBlockAssign(ownerName, methodName)
+    if(@unassignedBeforeBlocks[ownerName] && @unassignedBeforeBlocks[ownerName].length > 0)
+      if(!@singleBeforeBlocks[ownerName])
+        @singleBeforeBlocks[ownerName] = Hash.new
+      end
+      if(!@singleBeforeBlocks[ownerName][methodName])
+        @singleBeforeBlocks[ownerName][methodName] = []
+      end
+      @singleBeforeBlocks[ownerName][methodName] += @unassignedBeforeBlocks[ownerName]
+      @unassignedBeforeBlocks[ownerName] = []
+    end
+  end
+  
+  def singleAfterBlockAssign(ownerName, methodName)
+    if(@unassignedAfterBlocks[ownerName] && @unassignedAfterBlocks[ownerName].length > 0)
+      if(!@singleAfterBlocks[ownerName])
+        @singleAfterBlocks[ownerName] = Hash.new
+      end
+      if(!@singleAfterBlocks[ownerName][methodName])
+        @singleAfterBlocks[ownerName][methodName] = []
+      end
+      @singleAfterBlocks[ownerName][methodName] += @unassignedAfterBlocks[ownerName]
+      @unassignedAfterBlocks[ownerName] = []
+    end
+  end
+  
+  def getBeforeBlocks(obj, ownerName, methodName)
+    result = []
+    if(@beforeBlocks[obj.class.name])
+      result += @beforeBlocks[obj.class.name]
+    end
+    if(@singleBeforeBlocks[ownerName] && @singleBeforeBlocks[ownerName][methodName])
+      result += @singleBeforeBlocks[ownerName][methodName]
+    end
+    obj.class.ancestors.each {
+      |anc|
+      if(anc.name != ownerName && @beforeBlocks[anc.name])
+        result += @beforeBlocks[anc.name]
+      end
+    }
+    result
+  end
+  
+  def getAfterBlocks(obj, ownerName, methodName)
+    result = []
+    if(@afterBlocks[obj.class.name])
+      result = result + @afterBlocks[obj.class.name]
+    end
+    if(@singleAfterBlocks[ownerName] && @singleAfterBlocks[ownerName][methodName])
+      result += @singleAfterBlocks[ownerName][methodName]
+    end
+    obj.class.ancestors.each {
+      |anc|
+      if(anc.name != ownerName && @afterBlocks[anc.name])
+        result += @afterBlocks[anc.name]
+      end
+    }
+    result
+  end
+end
+
 #El modulo Contracts va a agregar metodos de clase nuevos a la clase (o módulo) que lo incluya
 module Contracts
   
   #El módulo ClassMethods incluye en si los métodos de clase que van a agregarse a la clase objetivo
   module ContractsClassMethods
     
-    #Estos dos diccionarios van a almacenar los procs que voy a querer ejecutar en los contratos
-    #Son diccionarios que adentro tienen arrays/listas/como se llamen en ruby
-    @@__beforeBlocks = Hash.new
-    @@__afterBlocks = Hash.new
+    #Objeto que se encarga de la gestion de las listas y diccionarios de bloques
+    @@__blocksManager = BlocksManager.new
     
     #Esta variable la voy a utilizar mas abajo para evitar que mi código caiga en llamadas recursivas infinitas
     @@__lastMethodAdded = nil
     
-    #Inicializa listas dentro de los diccionarios para esta clase/módulo
-    def initLists
-      if(!@@__beforeBlocks[self.name])
-        @@__beforeBlocks[self.name] = []
-        @@__afterBlocks[self.name] = []
-      end
-    end
-    
     #Este método es el que voy a usar para definir los contratos en las clases que incluyan el modulo Contracts
-    #Es un método de clase y recibe como parámetros dos procs
-    def before_and_after_each_call(beforeBlock, afterBlock)
-      initLists()
-      #Simplemente agrega los bloques recibidos a las listas correspondientes
-      @@__beforeBlocks[self.name].push(beforeBlock)
-      @@__afterBlocks[self.name].push(afterBlock)
-    end
-    
-    #Método que utilizo para heredar contratos de ancestros
-    def inheritContracts
-      initLists()
-      
-      myClass = self
-      
-      #Todo: cambiar este pseudo try catch por algo menos feo
-      begin
-        while (myClass.name != 'Class' && myClass.superclass)
-
-          myClass = myClass.superclass
-          if(@@__beforeBlocks[myClass.name])
-            @@__beforeBlocks[myClass.name].each { |blck| @@__beforeBlocks[self.name].push(blck) }
-          end
-
-          if(@@__afterBlocks[myClass.name])
-            @@__afterBlocks[myClass.name].each { |blck| @@__afterBlocks[self.name].push(blck) }
-          end
+    #Es un método de clase y recibe como parámetros dos procs y un flag para determinar si los bloques se agregan para
+    #toda la clase/modulo o solo para el siguiente metodo en definirse
+    def before_and_after_each_call(beforeBlock = false, afterBlock = false, singleMethod = false)
+      if(!singleMethod)
+        if(beforeBlock)
+          @@__blocksManager.beforeBlockPush(beforeBlock, self.name)
         end
-      rescue
-        
+        if(afterBlock)
+          @@__blocksManager.afterBlockPush(afterBlock, self.name)
+        end
+      else
+        if(beforeBlock)
+          @@__blocksManager.unassignedBeforeBlockPush(beforeBlock, self.name)
+        end
+        if(afterBlock)
+          @@__blocksManager.unassignedAfterBlockPush(afterBlock, self.name)
+        end
       end
-    end
-    
-    #Método que utilizo para incluir contratos de módulos
-    def includeContracts
-      initLists()
-      self.included_modules.each {|modl| 
-        if(@@__beforeBlocks[modl.name])
-          @@__beforeBlocks[modl.name].each { |blck| @@__beforeBlocks[self.name].push(blck) }
-        end
-
-        if(@@__afterBlocks[modl.name])
-          @@__afterBlocks[modl.name].each { |blck| @@__afterBlocks[self.name].push(blck) }
-        end
-      }
     end
     
     #Esto es un hook de ruby que se llama cada vez que un nuevo método es definido (en una clase o un módulo)
@@ -84,18 +151,29 @@ module Contracts
         
         #Defino un nuevo método que va a ser llamado en lugar del método original
         define_method custom do |*args, &block|
-          if(@@__beforeBlocks[self.class.name])
-            @@__beforeBlocks[self.class.name].each { |blck| blck.call(self) } #Ejecuto todos los bloques before que tenia almacenados
-          end
-          send original, *args, &block #Ejecuto el método original por su nombre alternativo
-          if(@@__afterBlocks[self.class.name])
-            @@__afterBlocks[self.class.name].each { |blck| blck.call(self) } #Ejecuto todos los bloques after que tenia almacenados
-          end
+          
+          paramNames = method(original).parameters.map(&:last).map(&:to_s)
+          
+          #Ejecuto todos los bloques before
+          @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+            |blck| blck.call(self, paramNames, args) 
+          }
+          #Ejecuto el método original por su nombre alternativo
+          result = send original, *args, &block 
+          #Ejecuto todos los bloques after que tenia almacenados
+          @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+            |blck| blck.call(self, paramNames, args, result) 
+          }
+          result
         end
         
         #Defino los alias usando los identificadores previamente creados
         alias_method original, name #El identificador original va a servir para llamar al método original
         alias_method name, custom #El nombre original ahora va a llamar a mi método custom
+        
+        #Le asigno los bloques single si existen
+        @@__blocksManager.singleBeforeBlockAssign(self.name, name)
+        @@__blocksManager.singleAfterBlockAssign(self.name, name)
       end
     end
   end
@@ -103,7 +181,7 @@ module Contracts
   #Cuando el módulo es incluido
   def self.included(base)
     base.extend(ContractsClassMethods) #Agrego los métodos del módulo ClassMethods como métodos de clase al modulo/clase que me está incluyendo
-    base.inheritContracts
+    #base.inheritContracts
     #base.includeContracts Esto por ahora acá no hace nada, hay que llamarlo al terminar de incluir los módulos
   end
 end
@@ -133,12 +211,14 @@ class TestClass < ParentTestClass
   include Contracts
   include TestModule
   
-  includeContracts #Esto es opcional por si se quieren incluir los contratos presentes en módulos (sigo investigando como hacerlo automáticamente)
-  
   before_and_after_each_call(proc{ puts 'Before 1' },  proc{ puts 'After 1' })
-  before_and_after_each_call(proc{ puts 'Before 2' },  proc{ puts 'After 2' })
+  before_and_after_each_call(proc{ puts 'Before 2' },  proc{ puts 'After 2' }, true)
   
-  def aMethod
+  def aMethod(param1, param2)
+    'A Class Method'
+  end
+  
+  def aMethod2(param1, param2)
     'A Class Method'
   end
   
