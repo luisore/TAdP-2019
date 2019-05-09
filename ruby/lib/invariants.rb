@@ -1,5 +1,12 @@
 require_relative  'contracts.rb'
 
+#Error custom para cuando la invarianza da false
+class InvariantError < StandardError
+  def initialize(msg = "Invariant Error")
+    super
+  end
+end
+
 #El modulo Invariants va a agregar metodos de clase nuevos a la clase (o módulo) que lo incluya
 module Invariants
   include Contracts
@@ -13,12 +20,12 @@ module Invariants
     def invariant(&block)
       myBlock = block
       #Creo un contrato nuevo, solo me interesa el block after
-      before_and_after_each_call(proc{}, proc{|myInstance| 
+      before_and_after_each_call(false, proc{|myInstance| 
         #Ejecuto el bloque en el contexto/scope del objeto que me llega por parametro
         #Evaluo el resultado como booleano
         #Si da false tiro una excepción
         if(!myInstance.instance_eval &myBlock)
-          raise 'Invariant Error'
+          raise InvariantError
         end
       })
     end
@@ -35,15 +42,17 @@ class TestClass2
   include Contracts
   include Invariants
   
-  invariant {
-    @life > 0
-  }
+  invariant {@life > 0}
   
   def initialize()
-    @life = 2
+    @life = 100
   end
   
-  def aMethod
-    @life = -1
+  def aFailMethod
+    @life = -2
+  end
+  
+  def aSuccessMethod
+    @life = 40
   end
 end

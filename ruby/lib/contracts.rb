@@ -111,7 +111,7 @@ module Contracts
     @@__blocksManager = BlocksManager.new
     
     #Esta variable la voy a utilizar mas abajo para evitar que mi código caiga en llamadas recursivas infinitas
-    @@__lastMethodAdded = nil
+    @@__lastMethodAdded = Hash.new
     
     #Este método es el que voy a usar para definir los contratos en las clases que incluyan el modulo Contracts
     #Es un método de clase y recibe como parámetros dos procs y un flag para determinar si los bloques se agregan para
@@ -142,13 +142,13 @@ module Contracts
       #Esta condición evita que method_added se llame recursivamente hasta el infinito
       #Esto puede darse porque mas abajo estoy definiendo un nuevo método
       #@@__lastMethodAdded puede ser nill o una lista con el nombre original del método y los alternativos que defino mas abajo
-      if(!@@__lastMethodAdded || !@@__lastMethodAdded.include?(name))
+      if(!@@__lastMethodAdded[self.name] || !@@__lastMethodAdded[self.name].include?(name))
         
         #defino dos nuevos identificadores usando como base el nombre original del método
-        custom = :"#{name}_custom" #este va a "apuntar" a un nuevo método que voy a definir a continuación
-        original = :"#{name}_original" #Este va a apuntar al método original pero con un nombre alternativo
-        @@__lastMethodAdded = [name, custom, original] #Asigno la lista que para la condición que mencioné antes
-        
+        custom = :"#{self.name}_#{name}_custom" #este va a "apuntar" a un nuevo método que voy a definir a continuación
+        original = :"#{self.name}_#{name}_original" #Este va a apuntar al método original pero con un nombre alternativo
+        @@__lastMethodAdded[self.name] = [name, custom, original] #Asigno la lista que para la condición que mencioné antes
+
         #Defino un nuevo método que va a ser llamado en lugar del método original
         define_method custom do |*args, &block|
           
@@ -221,6 +221,4 @@ class TestClass < ParentTestClass
   def aMethod2(param1, param2)
     'A Class Method'
   end
-  
-  
 end
