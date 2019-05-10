@@ -37,31 +37,4 @@ module Invariants
   end
 end
 
-#Clase de ejemplo para testear, deberia fallar al llamar al método "aMethod"
-class TestClass2
-  include Contracts
-  include Invariants
-  
-  attr_accessor :energy
-  
-  invariant {@life > 0}
-  invariant {energy > 0}
-  
-  def initialize()
-    @life = 100
-    self.energy = 100
-  end
-  
-  def aFailMethod
-    @life = -2
-  end
-  
-  def aFailMethod2
-    self.energy = -4
-  end
-  
-  def aSuccessMethod
-    @life = 40
-    self.energy = 20
-  end
-end
+

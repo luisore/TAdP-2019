@@ -204,28 +204,3 @@ module TestModule
   end
 end
 
-class ParentTestClass
-  include Contracts
-  
-  before_and_after_each_call(proc{ puts 'Before from parent' },  proc{ puts 'After from parent' })
-  
-  def aParentMethod
-    'A Parent Method'
-  end
-end
-
-class TestClass < ParentTestClass
-  include Contracts
-  include TestModule
-  
-  before_and_after_each_call(proc{ puts 'Before 1' },  proc{ puts 'After 1' })
-  before_and_after_each_call(proc{ puts 'Before 2' },  proc{ puts 'After 2' }, true)
-  
-  def aMethod(param1, param2)
-    'A Class Method'
-  end
-  
-  def aMethod2(param1, param2)
-    'A Class Method'
-  end
-end
