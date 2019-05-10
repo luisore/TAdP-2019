@@ -148,22 +148,29 @@ module Contracts
         custom = :"#{self.name}_#{name}_custom" #este va a "apuntar" a un nuevo método que voy a definir a continuación
         original = :"#{self.name}_#{name}_original" #Este va a apuntar al método original pero con un nombre alternativo
         @@__lastMethodAdded[self.name] = [name, custom, original] #Asigno la lista que para la condición que mencioné antes
-
+        
         #Defino un nuevo método que va a ser llamado en lugar del método original
         define_method custom do |*args, &block|
           
           paramNames = method(original).parameters.map(&:last).map(&:to_s)
           
-          #Ejecuto todos los bloques before
-          @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
-            |blck| blck.call(self, paramNames, args) 
-          }
+          #Si no es un accesor
+          if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
+            #Ejecuto todos los bloques before
+            @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+              |blck| blck.call(self, paramNames, args) 
+            }
+          end
           #Ejecuto el método original por su nombre alternativo
           result = send original, *args, &block 
-          #Ejecuto todos los bloques after que tenia almacenados
-          @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
-            |blck| blck.call(self, paramNames, args, result) 
-          }
+          
+          #Si no es un accesor
+          if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
+            #Ejecuto todos los bloques after que tenia almacenados
+            @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+              |blck| blck.call(self, paramNames, args, result) 
+            }
+          end
           result
         end
         
