@@ -31,6 +31,10 @@ class ObjectWrapper
       @__originalObject.send mName, *args, &block
     end
   end
+  
+  def respond_to_missing?(mName, includePrivate = false)
+    @__params.key?(mName.to_s) || @__originalObject.respond_to_missing?(mName, includePrivate)
+  end
 end
 
 module Conditions

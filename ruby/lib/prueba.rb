@@ -7,7 +7,7 @@ class Abaco
   include Conditions
 
   pre {
-    puts 'Padre1'
+    print 'Padre1'
     true
   }
   def sumar(numero1, numero2)
@@ -34,7 +34,7 @@ class Calculadora < Abaco
   end
 
   pre {
-    puts 'Hijo1'
+    print 'Hijo1'
     true
   }
   def sumar(numero1, numero2) #Este método ejecuta tambien la precondición del padre porque llama a super
@@ -79,10 +79,21 @@ end
 class ParentTestClass
   include Contracts
 
-  before_and_after_each_call(proc{ puts 'Before from parent' },  proc{ puts 'After from parent' })
+  before_and_after_each_call(proc{ print 'Before from parent' },  proc{ print 'After from parent' })
 
   def aParentMethod
     'A Parent Method'
+  end
+end
+
+#Módulos y clases de ejemplo para testear los contratos
+module TestModule
+  include Contracts
+  
+  before_and_after_each_call(proc{ print 'Before from module' },  proc{ print 'After from module' })
+  
+  def aModuleMethod
+    'A Module Method'
   end
 end
 
@@ -90,23 +101,23 @@ class TestClass < ParentTestClass
   include Contracts
   include TestModule
 
-  before_and_after_each_call(proc{ puts 'Before 1' },  proc{ puts 'After 1' })
-  before_and_after_each_call(proc{ puts 'Before 2' },  proc{ puts 'After 2' }, true)
+  before_and_after_each_call(proc{ print 'Before 1' },  proc{ print 'After 1' })
+  before_and_after_each_call(proc{ print 'Before 2' },  proc{ print 'After 2' }, true)
 
-  def aMethod(param1, param2)
+  def aMethod()
     'A Class Method'
   end
 
-  def aMethod2(param1, param2)
+  def aMethod2()
     'A Class Method'
   end
 end
 
 class TestClass3
   include Contracts
-  before_and_after_each_call(proc{puts"Entro a un mensaje"},proc{puts"Salgo de un mensaje"})
+  before_and_after_each_call(proc{print"Entro a un mensaje"},proc{print"Salgo de un mensaje"})
   def aMessage
-    puts "MENSAJE"
+    print "MENSAJE"
     return 5
   end
 end

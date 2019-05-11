@@ -1,3 +1,5 @@
+#Este objeto se encarga del manejo y organizaci'on de bloques y procs
+#También se encarga de controlar la asignación de procs en la herencia
 class BlocksManager
   def initialize
     #Estos dos diccionarios van a almacenar los procs que voy a querer ejecutar en los contratos
@@ -5,9 +7,12 @@ class BlocksManager
     @beforeBlocks = Hash.new
     @afterBlocks = Hash.new
     
+    #Misma cosa, pero estos contienen los bloques sin asignar que van a ser asignados al próximo metodo en definirse 
+    #(en este módulo o clase, no en otro)
     @unassignedBeforeBlocks = Hash.new
     @unassignedAfterBlocks = Hash.new
     
+    #Acá se almacenan los bloques ya asignados a métodos específicos
     @singleBeforeBlocks = Hash.new
     @singleAfterBlocks = Hash.new
   end
@@ -76,7 +81,7 @@ class BlocksManager
     end
     obj.class.ancestors.each {
       |anc|
-      if(anc.name != ownerName && @beforeBlocks[anc.name])
+      if(anc.name != obj.class.name && @beforeBlocks[anc.name])
         result += @beforeBlocks[anc.name]
       end
     }
@@ -93,7 +98,7 @@ class BlocksManager
     end
     obj.class.ancestors.each {
       |anc|
-      if(anc.name != ownerName && @afterBlocks[anc.name])
+      if(anc.name != obj.class.name && @afterBlocks[anc.name])
         result += @afterBlocks[anc.name]
       end
     }
@@ -192,15 +197,3 @@ module Contracts
     #base.includeContracts Esto por ahora acá no hace nada, hay que llamarlo al terminar de incluir los módulos
   end
 end
-
-#Módulos y clases de ejemplo para testear los contratos
-module TestModule
-  include Contracts
-  
-  before_and_after_each_call(proc{ puts 'Before from module' },  proc{ puts 'After from module' })
-  
-  def aModuleMethod
-    'A Module Method'
-  end
-end
-

@@ -1,4 +1,7 @@
 require 'rspec'
 
-require_relative '../lib/prueba'
+#Los archivos que voy a necesitar
+require_relative '../lib/prueba.rb'
+require_relative 'test_spec.rb'
+
 
