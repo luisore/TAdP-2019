@@ -101,3 +101,12 @@ class TestClass < ParentTestClass
     'A Class Method'
   end
 end
+
+class TestClass3
+  include Contracts
+  before_and_after_each_call(proc{puts"Entro a un mensaje"},proc{puts"Salgo de un mensaje"})
+  def aMessage
+    puts "MENSAJE"
+    return 5
+  end
+end

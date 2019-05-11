@@ -1,4 +1,10 @@
+describe 'test de Antes y Después' do
+  it 'Cumple con lo solicitado' do
+    expect(TestClass3.new.aMessage).to eq 5
+    expect{TestClass3.new.aMessage}.to output{"Entro a un mensaje\nMENSAJE\nSalgo de un mensaje"}.to_stdout
+  end
 
+end
 
 describe 'test de invariantes' do
 
