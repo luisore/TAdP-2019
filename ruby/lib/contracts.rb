@@ -73,16 +73,16 @@ class BlocksManager
   
   def getBeforeBlocks(obj, ownerName, methodName)
     result = []
-    if(@beforeBlocks[obj.class.name])
-      result += @beforeBlocks[obj.class.name]
+    if(@beforeBlocks[obj.class])
+      result += @beforeBlocks[obj.class]
     end
     if(@singleBeforeBlocks[ownerName] && @singleBeforeBlocks[ownerName][methodName])
       result += @singleBeforeBlocks[ownerName][methodName]
     end
     obj.class.ancestors.each {
       |anc|
-      if(anc.name != obj.class.name && @beforeBlocks[anc.name])
-        result += @beforeBlocks[anc.name]
+      if(anc != obj.class && @beforeBlocks[anc])
+        result += @beforeBlocks[anc]
       end
     }
     result
@@ -90,16 +90,16 @@ class BlocksManager
   
   def getAfterBlocks(obj, ownerName, methodName)
     result = []
-    if(@afterBlocks[obj.class.name])
-      result = result + @afterBlocks[obj.class.name]
+    if(@afterBlocks[obj.class])
+      result = result + @afterBlocks[obj.class]
     end
     if(@singleAfterBlocks[ownerName] && @singleAfterBlocks[ownerName][methodName])
       result += @singleAfterBlocks[ownerName][methodName]
     end
     obj.class.ancestors.each {
       |anc|
-      if(anc.name != obj.class.name && @afterBlocks[anc.name])
-        result += @afterBlocks[anc.name]
+      if(anc != obj.class && @afterBlocks[anc])
+        result += @afterBlocks[anc]
       end
     }
     result
@@ -111,30 +111,37 @@ module Contracts
   
   #El módulo ClassMethods incluye en si los métodos de clase que van a agregarse a la clase objetivo
   module ContractsClassMethods
-    
+
     #Objeto que se encarga de la gestion de las listas y diccionarios de bloques
+    # def __blocksManager
+    #   @__blocksManager ||= BlocksManager.new
+    # end
     @@__blocksManager = BlocksManager.new
-    
+
     #Esta variable la voy a utilizar mas abajo para evitar que mi código caiga en llamadas recursivas infinitas
+    # def __lastMethodAdded
+    #   @__lastMethodAdded ||= Hash.new
+    # end
     @@__lastMethodAdded = Hash.new
-    
+
+
     #Este método es el que voy a usar para definir los contratos en las clases que incluyan el modulo Contracts
     #Es un método de clase y recibe como parámetros dos procs y un flag para determinar si los bloques se agregan para
     #toda la clase/modulo o solo para el siguiente metodo en definirse
     def before_and_after_each_call(beforeBlock = false, afterBlock = false, singleMethod = false)
       if(!singleMethod)
         if(beforeBlock)
-          @@__blocksManager.beforeBlockPush(beforeBlock, self.name)
+          @@__blocksManager.beforeBlockPush(beforeBlock, self)
         end
         if(afterBlock)
-          @@__blocksManager.afterBlockPush(afterBlock, self.name)
+          @@__blocksManager.afterBlockPush(afterBlock, self)
         end
       else
         if(beforeBlock)
-          @@__blocksManager.unassignedBeforeBlockPush(beforeBlock, self.name)
+          @@__blocksManager.unassignedBeforeBlockPush(beforeBlock, self)
         end
         if(afterBlock)
-          @@__blocksManager.unassignedAfterBlockPush(afterBlock, self.name)
+          @@__blocksManager.unassignedAfterBlockPush(afterBlock, self)
         end
       end
     end
@@ -147,12 +154,12 @@ module Contracts
       #Esta condición evita que method_added se llame recursivamente hasta el infinito
       #Esto puede darse porque mas abajo estoy definiendo un nuevo método
       #@@__lastMethodAdded puede ser nill o una lista con el nombre original del método y los alternativos que defino mas abajo
-      if(!@@__lastMethodAdded[self.name] || !@@__lastMethodAdded[self.name].include?(name))
+      if(!@@__lastMethodAdded[self] || !@@__lastMethodAdded[self].include?(name))
         
         #defino dos nuevos identificadores usando como base el nombre original del método
         custom = :"#{self.name}_#{name}_custom" #este va a "apuntar" a un nuevo método que voy a definir a continuación
         original = :"#{self.name}_#{name}_original" #Este va a apuntar al método original pero con un nombre alternativo
-        @@__lastMethodAdded[self.name] = [name, custom, original] #Asigno la lista que para la condición que mencioné antes
+        @@__lastMethodAdded[self] = [name, custom, original] #Asigno la lista que para la condición que mencioné antes
         
         #Defino un nuevo método que va a ser llamado en lugar del método original
         define_method custom do |*args, &block|
@@ -162,7 +169,7 @@ module Contracts
           #Si no es un accesor
           if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
             #Ejecuto todos los bloques before
-            @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+            @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner, name).each {
               |blck| blck.call(self, paramNames, args) 
             }
           end
@@ -172,7 +179,7 @@ module Contracts
           #Si no es un accesor
           if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
             #Ejecuto todos los bloques after que tenia almacenados
-            @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner.name, name).each { 
+            @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner, name).each {
               |blck| blck.call(self, paramNames, args, result) 
             }
           end
@@ -184,8 +191,8 @@ module Contracts
         alias_method name, custom #El nombre original ahora va a llamar a mi método custom
         
         #Le asigno los bloques single si existen
-        @@__blocksManager.singleBeforeBlockAssign(self.name, name)
-        @@__blocksManager.singleAfterBlockAssign(self.name, name)
+        @@__blocksManager.singleBeforeBlockAssign(self, name)
+        @@__blocksManager.singleAfterBlockAssign(self, name)
       end
     end
   end

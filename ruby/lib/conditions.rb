@@ -65,7 +65,6 @@ module Conditions
     end
     
     def post(&block)
-      
       #bloque de la postcondición que se supone devuelve un boolean y 
       #espera recibír el valor de return de la función como argumento
       myBlock = block 
@@ -77,10 +76,9 @@ module Conditions
         instanceWrapper = ObjectWrapper.new(myInstance, paramsNames, values) 
           
         #Ejecuto el bloque en el wrap de la instancia del objeto que contenia el método de la condición (además le paso el result del método)
-        if(!instanceWrapper.instance_exec result, &myBlock)
+        if(!instanceWrapper.instance_exec(result, &myBlock))
           raise PostConditionError
         end
-
       }, true) #El tercer parámetro está en true porque solo quiero que aplique al siguiente método en ser definido
     end
     
@@ -91,4 +89,3 @@ module Conditions
     base.extend(ConditionsClassMethods)
   end
 end
-
