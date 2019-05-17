@@ -113,4 +113,12 @@ describe 'test de condiciones' do
       Así que la rompo restando un negativo' do
     expect {Calculadora.new.restar(4, -2)}.to raise_error PostConditionError
   end
+  
+  it 'Si ejecuto el método chequearContador con un valor mayor o igual a 2 falla la precondición basada en una variable de instancia' do
+    expect {Calculadora.new.chequearContador(3)}.to raise_error PreConditionError
+  end
+  
+  it 'Si ejecuto el método chequearContador con un valor menor a 2 me devuelve ese valor + 1' do
+    expect(Calculadora.new.chequearContador(1)).to eq(2)
+  end
 end

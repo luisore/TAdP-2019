@@ -26,10 +26,20 @@ end
 class Calculadora < Abaco
   include Contracts
   include Conditions
+  
+  def initialize()
+    @limitaContador = 2
+  end
+  
+  pre { @limitaContador > valor }
+  def chequearContador(valor)
+    valor + 1
+  end
 
   pre { divisor > 0 }
-  post { |result| result == dividendo / divisor  }
+  post { |result| result == dividendo / divisor }
   def dividir(dividendo, divisor)
+    @algoMas = 1
     dividendo / divisor
   end
 

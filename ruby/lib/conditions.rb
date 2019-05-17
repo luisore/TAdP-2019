@@ -22,6 +22,9 @@ class ObjectWrapper
       @__params[val.to_s] = values[index]
     }
     @__originalObject = originalObject
+    
+    #Copio las variables de instancia del objeto original
+    originalObject.instance_variables.each {|name| instance_variable_set(name, originalObject.instance_variable_get(name)) }
   end
   
   def method_missing(mName, *args, &block)
