@@ -1,107 +1,106 @@
 #Este objeto se encarga del manejo y organizaci'on de bloques y procs
 #También se encarga de controlar la asignación de procs en la herencia
 class BlocksManager
-  def initialize
+  def initialize(owner)
+    @myOwner = owner #Esto esta para testeo despues sacarlo
+    
     #Estos dos diccionarios van a almacenar los procs que voy a querer ejecutar en los contratos
     #Son diccionarios que adentro tienen arrays/listas/como se llamen en ruby
-    @beforeBlocks = Hash.new
-    @afterBlocks = Hash.new
+    @beforeBlocks = []
+    @afterBlocks = []
     
     #Misma cosa, pero estos contienen los bloques sin asignar que van a ser asignados al próximo metodo en definirse 
     #(en este módulo o clase, no en otro)
-    @unassignedBeforeBlocks = Hash.new
-    @unassignedAfterBlocks = Hash.new
+    @unassignedBeforeBlocks = []
+    @unassignedAfterBlocks = []
     
     #Acá se almacenan los bloques ya asignados a métodos específicos
     @singleBeforeBlocks = Hash.new
     @singleAfterBlocks = Hash.new
   end
   
-  def beforeBlockPush(beforeBlock, key)
-    if(!@beforeBlocks[key])
-      @beforeBlocks[key] = []
-    end
-    @beforeBlocks[key].push(beforeBlock)
+  def getOwner
+    @myOwner
   end
   
-  def afterBlockPush(afterBlock, key)
-    if(!@afterBlocks[key])
-      @afterBlocks[key] = []
-    end
-    @afterBlocks[key].push(afterBlock)
+  def beforeBlockPush(beforeBlock)
+    @beforeBlocks.push(beforeBlock)
   end
   
-  def unassignedBeforeBlockPush(beforeBlock, key)
-    if(!@unassignedBeforeBlocks[key])
-      @unassignedBeforeBlocks[key] = []
-    end
-    @unassignedBeforeBlocks[key].push(beforeBlock)
+  def afterBlockPush(afterBlock)
+    @afterBlocks.push(afterBlock)
   end
   
-  def unassignedAfterBlockPush(afterBlock, key)
-    if(!@unassignedAfterBlocks[key])
-      @unassignedAfterBlocks[key] = []
-    end
-    @unassignedAfterBlocks[key].push(afterBlock)
+  def unassignedBeforeBlockPush(beforeBlock)
+    @unassignedBeforeBlocks.push(beforeBlock)
   end
   
-  def singleBeforeBlockAssign(ownerName, methodName)
-    if(@unassignedBeforeBlocks[ownerName] && @unassignedBeforeBlocks[ownerName].length > 0)
-      if(!@singleBeforeBlocks[ownerName])
-        @singleBeforeBlocks[ownerName] = Hash.new
+  def unassignedAfterBlockPush(afterBlock)
+    @unassignedAfterBlocks.push(afterBlock)
+  end
+  
+  def singleBeforeBlockAssign(methodName)
+    if(@unassignedBeforeBlocks.length > 0)
+      if(!@singleBeforeBlocks[methodName])
+        @singleBeforeBlocks[methodName] = []
       end
-      if(!@singleBeforeBlocks[ownerName][methodName])
-        @singleBeforeBlocks[ownerName][methodName] = []
-      end
-      @singleBeforeBlocks[ownerName][methodName] += @unassignedBeforeBlocks[ownerName]
-      @unassignedBeforeBlocks[ownerName] = []
+      @singleBeforeBlocks[methodName] += @unassignedBeforeBlocks
+      @unassignedBeforeBlocks = []
     end
   end
   
-  def singleAfterBlockAssign(ownerName, methodName)
-    if(@unassignedAfterBlocks[ownerName] && @unassignedAfterBlocks[ownerName].length > 0)
-      if(!@singleAfterBlocks[ownerName])
-        @singleAfterBlocks[ownerName] = Hash.new
+  def singleAfterBlockAssign(methodName)
+    if(@unassignedAfterBlocks.length > 0)
+      if(!@singleAfterBlocks[methodName])
+        @singleAfterBlocks[methodName] = []
       end
-      if(!@singleAfterBlocks[ownerName][methodName])
-        @singleAfterBlocks[ownerName][methodName] = []
-      end
-      @singleAfterBlocks[ownerName][methodName] += @unassignedAfterBlocks[ownerName]
-      @unassignedAfterBlocks[ownerName] = []
+      @singleAfterBlocks[methodName] += @unassignedAfterBlocks
+      @unassignedAfterBlocks = []
     end
   end
   
-  def getBeforeBlocks(obj, ownerName, methodName)
+  def getBeforeBlocks(myClass, methodName, includeAncestors = true)
     result = []
-    if(@beforeBlocks[obj.class])
-      result += @beforeBlocks[obj.class]
+    
+    if(@beforeBlocks)
+      result += @beforeBlocks
     end
-    if(@singleBeforeBlocks[ownerName] && @singleBeforeBlocks[ownerName][methodName])
-      result += @singleBeforeBlocks[ownerName][methodName]
+    
+    if(methodName && @singleBeforeBlocks[methodName])
+      result += @singleBeforeBlocks[methodName]
     end
-    obj.class.ancestors.each {
-      |anc|
-      if(anc != obj.class && @beforeBlocks[anc])
-        result += @beforeBlocks[anc]
-      end
-    }
+    
+    if(includeAncestors)
+      myClass.ancestors.each {
+        |anc|
+        if(anc != myClass && anc.respond_to?("__blocksManager"))
+          result += anc.__blocksManager.getBeforeBlocks(false, false, false)
+        end
+      }
+    end
+    
     result
   end
   
-  def getAfterBlocks(obj, ownerName, methodName)
+  def getAfterBlocks(myClass, methodName, includeAncestors = true)
     result = []
-    if(@afterBlocks[obj.class])
-      result = result + @afterBlocks[obj.class]
+    
+    if(@afterBlocks)
+      result += @afterBlocks
     end
-    if(@singleAfterBlocks[ownerName] && @singleAfterBlocks[ownerName][methodName])
-      result += @singleAfterBlocks[ownerName][methodName]
+    
+    if(methodName && @singleAfterBlocks[methodName])
+      result += @singleAfterBlocks[methodName]
     end
-    obj.class.ancestors.each {
-      |anc|
-      if(anc != obj.class && @afterBlocks[anc])
-        result += @afterBlocks[anc]
-      end
-    }
+    
+    if(includeAncestors)
+      myClass.ancestors.each {
+        |anc|
+        if(anc != myClass && anc.respond_to?("__blocksManager"))
+          result += anc.__blocksManager.getAfterBlocks(false, false, false)
+        end
+      }
+    end
     result
   end
 end
@@ -113,10 +112,11 @@ module Contracts
   module ContractsClassMethods
 
     #Objeto que se encarga de la gestion de las listas y diccionarios de bloques
-    # def __blocksManager
-    #   @__blocksManager ||= BlocksManager.new
-    # end
-    @@__blocksManager = BlocksManager.new
+    def __blocksManager
+      @__blocksManager ||= BlocksManager.new(self)
+    end
+    
+    
 
     #Esta variable la voy a utilizar mas abajo para evitar que mi código caiga en llamadas recursivas infinitas
     # def __lastMethodAdded
@@ -131,17 +131,17 @@ module Contracts
     def before_and_after_each_call(beforeBlock = false, afterBlock = false, singleMethod = false)
       if(!singleMethod)
         if(beforeBlock)
-          @@__blocksManager.beforeBlockPush(beforeBlock, self)
+          __blocksManager.beforeBlockPush(beforeBlock)
         end
         if(afterBlock)
-          @@__blocksManager.afterBlockPush(afterBlock, self)
+          __blocksManager.afterBlockPush(afterBlock)
         end
       else
         if(beforeBlock)
-          @@__blocksManager.unassignedBeforeBlockPush(beforeBlock, self)
+          __blocksManager.unassignedBeforeBlockPush(beforeBlock)
         end
         if(afterBlock)
-          @@__blocksManager.unassignedAfterBlockPush(afterBlock, self)
+          __blocksManager.unassignedAfterBlockPush(afterBlock)
         end
       end
     end
@@ -169,7 +169,7 @@ module Contracts
           #Si no es un accesor
           if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
             #Ejecuto todos los bloques before
-            @@__blocksManager.getBeforeBlocks(self, self.method(__method__.to_sym).owner, name).each {
+            self.class.__blocksManager.getBeforeBlocks(self.class, name).each {
               |blck| blck.call(self, paramNames, args) 
             }
           end
@@ -179,7 +179,7 @@ module Contracts
           #Si no es un accesor
           if(!instance_variables.include?('@'.concat(name.to_s.sub('=', '')).to_sym))
             #Ejecuto todos los bloques after que tenia almacenados
-            @@__blocksManager.getAfterBlocks(self, self.method(__method__.to_sym).owner, name).each {
+            self.class.__blocksManager.getAfterBlocks(self.class, name).each {
               |blck| blck.call(self, paramNames, args, result) 
             }
           end
@@ -191,8 +191,8 @@ module Contracts
         alias_method name, custom #El nombre original ahora va a llamar a mi método custom
         
         #Le asigno los bloques single si existen
-        @@__blocksManager.singleBeforeBlockAssign(self, name)
-        @@__blocksManager.singleAfterBlockAssign(self, name)
+        __blocksManager.singleBeforeBlockAssign(name)
+        __blocksManager.singleAfterBlockAssign(name)
       end
     end
   end
@@ -200,7 +200,5 @@ module Contracts
   #Cuando el módulo es incluido
   def self.included(base)
     base.extend(ContractsClassMethods) #Agrego los métodos del módulo ClassMethods como métodos de clase al modulo/clase que me está incluyendo
-    #base.inheritContracts
-    #base.includeContracts Esto por ahora acá no hace nada, hay que llamarlo al terminar de incluir los módulos
   end
 end

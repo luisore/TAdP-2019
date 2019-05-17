@@ -11,6 +11,7 @@ class Abaco
     true
   }
   def sumar(numero1, numero2)
+    puts self.class.__blocksManager.getOwner #Esto deberia mostrar Abaco pero muestra Calculadora
     numero1 + numero2
   end
 
