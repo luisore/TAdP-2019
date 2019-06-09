@@ -7,11 +7,14 @@ class Abaco
   include Conditions
 
   pre {
-    print 'Padre1'
-    true
+    numero2 > -100
   }
   def sumar(numero1, numero2)
-    puts self.class.__blocksManager.getOwner #Esto deberia mostrar Abaco pero muestra Calculadora
+    # puts self.class.__blocksManager.getOwner #Esto deberia mostrar Abaco pero muestra Calculadora
+    #
+    # NO! self.class para TODOS los métodos del method lookup va a ser Calculadora, porque
+    # self referencia al objeto que recibió el mensaje y está ejecutando este método (sino, por ejemplo,
+    # las variables de instancia de las clases padre no tendrían sentido)
     numero1 + numero2
   end
 
@@ -45,8 +48,7 @@ class Calculadora < Abaco
   end
 
   pre {
-    print 'Hijo1'
-    true
+    numero1 > numero2
   }
   def sumar(numero1, numero2) #Este método ejecuta tambien la precondición del padre porque llama a super
     super

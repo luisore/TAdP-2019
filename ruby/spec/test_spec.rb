@@ -101,8 +101,14 @@ describe 'test de condiciones' do
     expect(Calculadora.new.dividir(10, 5)).to eq(2)
   end
 
-  it 'si se invoca al método sumar (que utiliza super) se ejecuta tambien la precondición del supermétodo' do
-    expect {Calculadora.new.sumar(2, 4)}.to output('Hijo1Padre1').to_stdout
+  it 'verifica condiciones propias antes que las de la superclase' do
+    expect(Calculadora.new.sumar(2, 1)).to eq(3)
+    expect {Calculadora.new.sumar(1, 2)}.to raise_error PreConditionError
+  end
+
+  it 'verifica condiciones de las superclases' do
+    expect(Calculadora.new.sumar(2, 1)).to eq(3)
+    expect {Calculadora.new.sumar(2, -101)}.to raise_error PreConditionError
   end
 
   it 'La postcondición del método restar espera que su resultado sea menor que el resultado del método suma con los mismos parámetros' do
