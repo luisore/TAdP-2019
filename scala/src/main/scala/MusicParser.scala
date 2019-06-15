@@ -1,11 +1,24 @@
 import java.io.{PushbackReader, StringReader}
 import Musica._
 import scala.collection.mutable.ListBuffer
+import scala.util.matching.Regex
 
 case class Note(name: String)
 
+object RegexParser {
+  def parse(input: String): String = {
+    val pattern = """(\d{1,})x\Q(\E((\w|\s)+)\Q)\E""".r
+    val output = pattern.replaceAllIn(input, m => (m.group(2) + " ") * m.group(1).toInt) //Esta expresión hace los reemplazos
+                 .replaceAll("( )+", " ") //Esta simplemente remueve los espacios dobles
+    pattern.findFirstIn(output) match { //Si es necesario sigo llamando recursivamente a la función
+      case Some(i) => return this.parse(output)
+      case None => return output.trim
+    }
+  }
+}
+
 class MusicParser(input: String) {
-  protected val inputStream = new PushbackReader(new StringReader(input))
+  protected val inputStream = new PushbackReader(new StringReader(RegexParser.parse(input)))
 
   protected def parseChar(): Char = {
     val parsed = inputStream.read()
