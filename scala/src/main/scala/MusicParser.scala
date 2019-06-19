@@ -17,6 +17,52 @@ object RegexParser {
   }
 }
 
+object Parser{
+  def anychar(palabra: String) = {
+    if(palabra != ""){
+    ( palabra.head , palabra.tail )
+    }else{
+      throw new RuntimeException("error de parseo")
+    }
+    
+  }
+  def char(palabra: String , letra: Char) = {
+    if(palabra.head == letra)
+      this.anychar(palabra)
+  }
+  def digit(palabra: String) = {
+    palabra.head match{
+      case '0' => ( palabra.head , palabra.tail )
+      case '1' => ( palabra.head , palabra.tail )
+      case '2' => ( palabra.head , palabra.tail )
+      case '3' => ( palabra.head , palabra.tail )
+      case '4' => ( palabra.head , palabra.tail )
+      case '5' => ( palabra.head , palabra.tail )
+      case '6' => ( palabra.head , palabra.tail )
+      case '7' => ( palabra.head , palabra.tail )
+      case '8' => ( palabra.head , palabra.tail )
+      case '9' => ( palabra.head , palabra.tail )
+      case _ => throw new RuntimeException("error de parseo")
+    }
+  }
+  def void(palabra: String) = ("",palabra.tail)
+  def letter(palabra: String) ={
+    if(palabra.head.isLetter){
+      (palabra.head , palabra.tail)
+    }else{
+       throw new RuntimeException("error de parseo")
+    }  
+  }
+  def alphaNum(palabra: String) ={
+    if(palabra.head.isLetterOrDigit){
+      (palabra.head , palabra.tail)
+    }else{
+       throw new RuntimeException("error de parseo")
+    }  
+  }
+}
+
+
 class MusicParser(input: String) {
   protected val inputStream = new PushbackReader(new StringReader(RegexParser.parse(input)))
 
