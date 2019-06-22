@@ -22,7 +22,7 @@ object Parser{
     if(palabra != ""){
     ( palabra.head , palabra.tail )
     }else{
-      throw new RuntimeException("error de parseo")
+      None
     }
     
   }
@@ -42,7 +42,7 @@ object Parser{
       case '7' => ( palabra.head , palabra.tail )
       case '8' => ( palabra.head , palabra.tail )
       case '9' => ( palabra.head , palabra.tail )
-      case _ => throw new RuntimeException("error de parseo")
+      case _ => None
     }
   }
   def void(palabra: String) = ("",palabra.tail)
@@ -50,14 +50,14 @@ object Parser{
     if(palabra.head.isLetter){
       (palabra.head , palabra.tail)
     }else{
-       throw new RuntimeException("error de parseo")
+       None
     }  
   }
   def alphaNum(palabra: String) ={
     if(palabra.head.isLetterOrDigit){
       (palabra.head , palabra.tail)
     }else{
-       throw new RuntimeException("error de parseo")
+      None
     }  
   }
 }
