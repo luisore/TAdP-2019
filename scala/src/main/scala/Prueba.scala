@@ -1,4 +1,4 @@
-class Parser(xc: String) {
+/*class Parser(xc: String) {
   var x: String = xc
   def sacarRepetido = {
     var lista: String = ""
@@ -32,4 +32,4 @@ object Demo{
  
     
   }
-}
+}*/
