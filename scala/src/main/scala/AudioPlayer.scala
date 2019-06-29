@@ -6,72 +6,71 @@ object AudioPlayer {
   require(VOLUME <= 127)
   require(VOLUME >= 0)
 
-  def reproducir(partitura: String): Unit = {
-    val melodia = new MusicParser(partitura).parse()
+  def reproducirNotas(notas: List[Nota]): Unit = {
+    val melodia = notas.map(nota ⇒ Sonido(Tono(6, nota), Negra))
 
     reproducir(melodia)
   }
 
-  def reproducir(melodia: List[Nota]): Unit = {
+  def reproducir(melodia: Melodia): Unit = {
     val synth = MidiSystem.getSynthesizer
 
     synth.open()
 
     val channel = synth.getChannels().head
 
-    tocarMelodia(channel, melodia)
+    melodia.foreach(tocar(channel))
 
     synth.close()
   }
 
-  def tocarMelodia(channel: MidiChannel, melodia: List[Nota], duracionNota: Int = 300): Unit = {
-    melodia match {
-      case Nil ⇒ Unit
-      case nota :: otraNota :: notas if nota == otraNota ⇒ {
-        tocarMelodia(channel, otraNota :: notas, duracionNota + 300)
+  def tocar(channel: MidiChannel)(tocable: Tocable) = {
+    tocable match {
+      case Sonido(tono, figura) ⇒ {
+        prenderTono(channel)(tono)
+
+        descansar(figura.duracion)
+
+        apagarTono(channel)(tono)
       }
-      case nota :: notas ⇒ {
-        tocarNota(channel, nota, duracionNota)
-        tocarMelodia(channel, notas)
+      case Silencio(figura) ⇒ descansar(figura.duracion)
+      case Acorde(tonos, figura) ⇒ {
+        tonos.foreach(prenderTono(channel))
+
+        descansar(figura.duracion)
+
+        tonos.foreach(apagarTono(channel))
       }
     }
-  }
-
-  def tocarNota(channel: MidiChannel, nota: Nota, duracionNota: Int): Unit = {
-    prenderNota(channel)(nota)
-
-    descansar(duracionNota)
-
-    apagarNota(channel)(nota)
   }
 
   def descansar(duration: Int): Unit = {
     Thread.sleep(duration)
   }
 
-  def prenderNota(channel: MidiChannel)(nota: Nota): Unit = {
-    channel.noteOn(midiId(nota), VOLUME)
+  def prenderTono(channel: MidiChannel)(tono: Tono): Unit = {
+    channel.noteOn(midiId(tono), VOLUME)
   }
 
-  def apagarNota(channel: MidiChannel)(nota: Nota): Unit = {
-    channel.noteOff(midiId(nota))
+  def apagarTono(channel: MidiChannel)(tono: Tono): Unit = {
+    channel.noteOff(midiId(tono))
   }
 
-  private def midiId(nota: Nota) = {
-    val cantidadSemitonosEnOctava = 12
-
-    val octava = 5
-
-    val idNota = nota match {
+  private def midiId(tono: Tono) = {
+    val idNota = tono.nota match {
       case C ⇒ 0
+      case Cs ⇒ 1
       case D ⇒ 2
+      case Ds ⇒ 3
       case E ⇒ 4
       case F ⇒ 5
+      case Fs ⇒ 6
       case G ⇒ 7
+      case Gs ⇒ 8
       case A ⇒ 9
+      case As ⇒ 10
       case B ⇒ 11
     }
-
-    idNota + cantidadSemitonosEnOctava * octava
+    idNota + 12 * tono.octava + 12
   }
 }
