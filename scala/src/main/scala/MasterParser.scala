@@ -1,5 +1,5 @@
 sealed trait ParseResult
-case class ParseSuccess(head: Char, tail: String) extends ParseResult
+case class ParseSuccess[a](head: a, tail: String) extends ParseResult
 case object ParseFail extends ParseResult
 
 
@@ -46,6 +46,45 @@ object MasterParser extends App {
     }
     new ParserWrapper(logic)
   }
+  
+  def anychar(): ParserWrapper = {
+    val logic = (input: String) => {
+      input.head match {
+        case "" => ParseFail
+        case _  => ParseSuccess(input.head, input.tail) 
+      }
+    }
+    new ParserWrapper(logic)
+  }
+  
+  def letter(): ParserWrapper = {
+    val logic = (input: String) => {
+      input.head match {
+        case a if a.isLetter => ParseSuccess(input.head, input.tail)
+        case _ => ParseFail
+      }
+    }
+    new ParserWrapper(logic)
+  }
+  
+  def alphaNum(): ParserWrapper = {
+    val logic = (input: String) => {
+      input.head match {
+        case a if a.isLetterOrDigit => ParseSuccess(input.head, input.tail)
+        case _ => ParseFail
+      }
+    }
+    new ParserWrapper(logic)
+  }
+  def void(): ParserWrapper = {
+    val logic = (input: String) => {
+      input.head match {
+        case "" => ParseFail
+        case _  => ParseSuccess((),input.tail) 
+      }
+    }
+    new ParserWrapper(logic)
+  }
 
 
   //Combinators
@@ -73,6 +112,8 @@ object MasterParser extends App {
       new ParserWrapper(logic)
     }
   }
+  
+  
 
   val parserJ = char('j')
   val parserI = char('i')
