@@ -16,8 +16,8 @@ class ParserWrapper(callback: (String) => ParseResult) {
     val logic = (input: String) => {
       val res = callback(input)
       res match {
-        case ParseSuccess(h, t) => res
-        case _ => ParseSuccess(' ', input)
+        case ParseSuccess[a](h, t) => res
+        case _ => ParseSuccess[a](' ', input)
       }
     }
     new ParserWrapper(logic)
@@ -30,7 +30,7 @@ object MasterParser extends App {
   def digit(): ParserWrapper = {
     val logic = (input: String) => {
       input.head match {
-        case a if a.isDigit => ParseSuccess(input.head, input.tail)
+        case a if a.isDigit => ParseSuccess[a](input.head, input.tail)
         case _ => ParseFail
       }
     }
@@ -40,7 +40,7 @@ object MasterParser extends App {
   def char(aChar: Char): ParserWrapper = {
     val logic = (input: String) => {
       input.head match {
-        case a if a == aChar => ParseSuccess(input.head, input.tail)
+        case a if a == aChar => ParseSuccess[a](input.head, input.tail)
         case _ => ParseFail
       }
     }
@@ -51,7 +51,7 @@ object MasterParser extends App {
     val logic = (input: String) => {
       input.head match {
         case "" => ParseFail
-        case _  => ParseSuccess(input.head, input.tail) 
+        case _  => ParseSuccess[a](input.head, input.tail) 
       }
     }
     new ParserWrapper(logic)
@@ -60,7 +60,7 @@ object MasterParser extends App {
   def letter(): ParserWrapper = {
     val logic = (input: String) => {
       input.head match {
-        case a if a.isLetter => ParseSuccess(input.head, input.tail)
+        case a if a.isLetter => ParseSuccess[a](input.head, input.tail)
         case _ => ParseFail
       }
     }
@@ -70,7 +70,7 @@ object MasterParser extends App {
   def alphaNum(): ParserWrapper = {
     val logic = (input: String) => {
       input.head match {
-        case a if a.isLetterOrDigit => ParseSuccess(input.head, input.tail)
+        case a if a.isLetterOrDigit => ParseSuccess[a](input.head, input.tail)
         case _ => ParseFail
       }
     }
@@ -80,7 +80,7 @@ object MasterParser extends App {
     val logic = (input: String) => {
       input.head match {
         case "" => ParseFail
-        case _  => ParseSuccess((),input.tail) 
+        case _  => ParseSuccess[a]((),input.tail) 
       }
     }
     new ParserWrapper(logic)
@@ -105,7 +105,7 @@ object MasterParser extends App {
       val logic = (input: String) => {
         val res = before(input)
         res match {
-          case ParseSuccess(h, t) => after(t)
+          case ParseSuccess[a](h, t) => after(t)
           case ParseFail => res
         }
       }
@@ -113,6 +113,21 @@ object MasterParser extends App {
     }
   }
   
+  implicit class LeftmostCombinator(val before: ParserWrapper) extends AnyVal {
+    def <~(after: ParserWrapper): ParserWrapper = {
+      val logic = (input: String) => {
+        val res = before(input)
+        res match {
+          case ParseSuccess[a](h,t) => after(t) match {
+            case ParseSuccess[a](h,t) => before(input)
+            case ParseFail => ParseFail
+          }
+          case ParseFail => res 
+        }
+      }
+      new ParseWrapper(logic)
+    }
+  }
   
 
   val parserJ = char('j')
