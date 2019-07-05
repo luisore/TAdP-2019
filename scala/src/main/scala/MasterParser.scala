@@ -1,13 +1,13 @@
-sealed trait ParseResult
-case class ParserSuccess[a](head: a, tail: String) extends ParseResult
-case object ParserFailure extends ParseResult
+sealed trait ParserResult
+case class ParserSuccess[a](head: a, tail: String) extends ParserResult
+case object ParserFailure extends ParserResult
 
 
 //Objeto que wrappea la lógica de los parsers básicos y me permite implementar los avanzados
-class ParserWrapper(callback: (String) => ParseResult) {
+class ParserWrapper(callback: (String) => ParserResult) {
 
   //Esto se llama al ejecutar el wrapper como función
-  def apply(input: String): ParseResult = {
+  def apply(input: String): ParserResult = {
     callback(input)
   }
 
@@ -15,18 +15,17 @@ class ParserWrapper(callback: (String) => ParseResult) {
 
   //OrCombinator
   def <|>(after: ParserWrapper): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       this.apply(input) match {
         case ParserFailure => after(input)
         case a => a
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
 
   //ConcatCombinator
   def <>(after: ParserWrapper): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       val res = this.apply(input)
       res match {
         case ParserSuccess(h,t) => after(t) match {
@@ -35,25 +34,23 @@ class ParserWrapper(callback: (String) => ParseResult) {
         }
         case _ => res
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
 
   //RightmostCombinator
   def ~>(after: ParserWrapper): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       val res = this.apply(input)
       res match {
         case ParserSuccess(_, t) => after(t)
         case ParserFailure => res
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
 
   //LeftmostCombinator
   def <~(after: ParserWrapper): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       val res = this.apply(input)
       res match {
         case ParserSuccess(h,t) => after(t) match {
@@ -62,20 +59,64 @@ class ParserWrapper(callback: (String) => ParseResult) {
         }
         case _ => res
       }
+    })
+  }
+
+  //Métodos auxiliares
+  private def recursiveParsing[a](prevList: List[a], input: String): ParserResult = {
+    this.apply(input) match {
+      case ParserSuccess(h,t) => this.recursiveParsing(prevList.::(h), t)
+      case _ => ParserSuccess(prevList, input)
     }
-    new ParserWrapper(logic)
   }
 
   //Parsers avanzados
+  def *(): ParserWrapper = {
+    new ParserWrapper((input: String) => {
+      this.recursiveParsing(List.empty[Any], input)
+    })
+  }
+
+  def +(): ParserWrapper = {
+    new ParserWrapper((input: String) => {
+      this.apply(input) match {
+        case ParserSuccess(_,_) => this.recursiveParsing(List.empty[Any], input)
+        case _ => ParserFailure
+      }
+    })
+  }
+
   def opt(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       val res = this.apply(input)
       res match {
         case ParserSuccess(_, _) => res
-        case _ => ParserSuccess[Unit]((), input.drop(1))
+        case _ => ParserSuccess[Unit]((), input)
       }
-    }
-    new ParserWrapper(logic)
+    })
+  }
+
+  def satisfies(condition: Any => Boolean): ParserWrapper = {
+    new ParserWrapper((input: String) => {
+      val res = this.apply(input)
+      res match {
+        case ParserSuccess(h, _) if condition(h) => res
+        case _ => ParserFailure
+      }
+    })
+  }
+
+  def sepBy(sep: ParserWrapper): ParserWrapper = {
+    (this <~ sep.opt).+
+  }
+
+  def const[a](value: a): ParserWrapper = {
+    new ParserWrapper((input: String) => {
+      this.apply(input) match {
+        case ParserSuccess(_, t) => ParserSuccess(value, t)
+        case _ => ParserFailure
+      }
+    })
   }
 }
 
@@ -83,72 +124,65 @@ object MasterParser extends App {
 
   //Parsers básicos
   def digit(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(a) if a.isDigit => ParserSuccess[Char](a, input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
 
   def char(aChar: Char): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(a) if a == aChar => ParserSuccess[Char](input.head, input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
   
   def anychar(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(a) => ParserSuccess[Char](a, input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
   
   def letter(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(a) if a.isLetter => ParserSuccess[Char](input.head, input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
   
   def alphaNum(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(a) if a.isLetterOrDigit => ParserSuccess[Char](input.head, input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
   def void(): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.headOption match {
         case Some(_)  => ParserSuccess[Unit]((),input.drop(1))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
 
   def string(aString: String): ParserWrapper = {
-    val logic = (input: String) => {
+    new ParserWrapper((input: String) => {
       input.substring(0, Math.min(input.length, aString.length)) match {
         case a if a == aString => ParserSuccess[String](a,input.drop(aString.length))
         case _ => ParserFailure
       }
-    }
-    new ParserWrapper(logic)
+    })
   }
   
 
@@ -163,6 +197,13 @@ object MasterParser extends App {
   val JyIyA = JyI <> parserA
   val JrightI = parserJ ~> parserI
   val JleftI = parserJ <~ parserI
+  val parserJkleene = parserJ.*
+  val parserJmas = parserJ.+
+  val parserJmasConCondicion = parserJmas.satisfies((aList: Any) => {
+    aList.isInstanceOf[List[_]] && aList.asInstanceOf[List[_]].length > 1
+  })
+  val saludoSep = saludo.sepBy(char('-'))
+  val saludoSepMinion = saludoSep.const("BANANA")
   println(JoI("ijaaah"))  //ParserSuccess(i,jaaah)
   println(JoI("jijaaah")) //ParserSuccess(j,ijaaah)
   println(JoI("aaah"))    //ParserFailure
@@ -177,4 +218,15 @@ object MasterParser extends App {
   println(JyI("jiji")) //ParserSuccess((j,i),ji)
   println(JyIyA("jio")) //ParserFailure
   println(JyIyA("jia")) //ParserSuccess(((j,i),a),)
+  println(parserJkleene("xxxkkk")) //ParserSuccess(List(),xxxkkk)
+  println(parserJkleene("jjjkkk")) //ParserSuccess(List(j, j, j),kkk)
+  println(parserJmas("xxxkkk")) //ParserFailure
+  println(parserJmas("jjjkkk")) //ParserSuccess(List(j, j, j),kkk)
+  println(parserJmasConCondicion("jjjkkk")) //ParserSuccess(List(j, j, j),kkk)
+  println(parserJmasConCondicion("jkkk")) //ParserFailure
+  println(saludoSep("hola")) //ParserSuccess(List(hola),)
+  println(saludoSep("hola-hola-hola-chau")) //ParserSuccess(List(hola, hola, hola),chau)
+  println(saludoSep("hola hola hola chau")) //ParserSuccess(List(hola), hola hola chau)
+  println(saludoSep("chau-hola")) //ParserFailure
+  println(saludoSepMinion("hola chau")) //ParserSuccess(BANANA, chau)
 }
