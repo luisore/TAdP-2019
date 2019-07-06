@@ -127,12 +127,12 @@ class MasterParserTest extends FreeSpec with Matchers {
     }
     "Parser Char que parsea 'A' operado con SepBy"- {
       "Se le pasa 'A-BCD' y retorna (List(A),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A-BCD"), ParserSuccess(List('A'),"BCD"))
+        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A-A-BCD"), ParserSuccess(List('A', 'A'),"BCD"))
       }
     }
     "Parser Char que parsea 'A' operado con SepBy"- {
       "Se le pasa 'A BCD' y falla" in {
-        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A BCD"), ParserFailure)
+        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A A BCD"), ParserSuccess(List('A')," A BCD"))
       }
     }
   }

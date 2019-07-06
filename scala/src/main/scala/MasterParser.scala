@@ -138,7 +138,7 @@ package object MasterParser {
   def digit(): ParserWrapper = {
     new ParserWrapper((input: String) => {
       input.headOption match {
-        case Some(a) if a.isDigit => ParserSuccess[Char](a, input.drop(1))
+        case Some(a) if a.isDigit => ParserSuccess[Int](a.asDigit, input.drop(1))
         case _ => ParserFailure
       }
     })
