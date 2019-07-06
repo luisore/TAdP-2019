@@ -125,14 +125,48 @@ class MasterParserTest extends FreeSpec with Matchers {
         assertParsesSucceededWithResult(parseoUnaA.+() ("BCDE"), ParserFailure)
       }
     }
-    "Parser Char que parsea 'A' operado con SepBy"- {
-      "Se le pasa 'A-BCD' y retorna (List(A),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A-A-BCD"), ParserSuccess(List('A', 'A'),"BCD"))
+    "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
+      "Se le pasa 'Hola' y retorna (List(Hola),)" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Hola"), ParserSuccess(List("Hola"),""))
       }
     }
-    "Parser Char que parsea 'A' operado con SepBy"- {
-      "Se le pasa 'A BCD' y falla" in {
-        assertParsesSucceededWithResult(parseoUnaA.sepBy(parseoGuion)("A A BCD"), ParserSuccess(List('A')," A BCD"))
+    "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
+      "Se le pasa 'Hola-Hola-Chau' y retorna (List(Hola,Hola),Chau)" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Hola-Hola-Chau"), ParserSuccess(List("Hola","Hola"),"Chau"))
+      }
+    }
+    "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
+      "Se le pasa 'Hola Hola Chau' y retorna (List(Hola), Hola Chau)" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Hola Hola Chau"), ParserSuccess(List("Hola")," Hola Chau"))
+      }
+    }
+    "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
+      "Se le pasa 'Chau-Hola' y falla" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Chau-Hola"), ParserFailure)
+      }
+    }
+    "Parser String que parsea 'Hola' operado con Const y el string 'Banana'" - {
+      "Se le pasa 'HolaChau' y retorna (Banana, Chau)" in {
+        assertParsesSucceededWithResult(parseoHola.const("Banana")("HolaChau"), ParserSuccess("Banana","Chau"))
+      }
+    }
+    "Parser String que parsea 'Hola' operado con Const y el string 'Banana'" - {
+      "Se le pasa 'ChauHola' y falla" in {
+        assertParsesSucceededWithResult(parseoHola.const("Banana")("ChauHola"), ParserFailure)
+      }
+    }
+    "Parser String que parsea 'Hola'  operado con SepBy y un parser char - y luego se opera con un satisfies, cuya condición solicita que la lista que retorna el parser sea mayor a 1"- {
+      "Se le pasa 'Hola-Hola-Hola-Chau' y retorna (List(Hola,Hola,Hola),Chau)" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion).satisfies((aList: Any) => {
+          aList.isInstanceOf[List[_]] && aList.asInstanceOf[List[_]].length > 1
+        }) ("Hola-Hola-Hola-Chau"), ParserSuccess(List("Hola","Hola","Hola"),"Chau"))
+      }
+    }
+    "Parser String que parsea 'Hola'  operado con SepBy y un parser char - y luego se opera con un satisfies, cuya condición solicita que la lista que retorna el parser sea mayor a 1 "- {
+      "Se le pasa 'Hola-Chau' y falla" in {
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion).satisfies((aList: Any) => {
+          aList.isInstanceOf[List[_]] && aList.asInstanceOf[List[_]].length > 1
+        }) ("Hola-Chau"), ParserFailure)
       }
     }
   }
