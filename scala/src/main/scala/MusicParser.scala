@@ -1,70 +1,11 @@
 import java.io.{PushbackReader, StringReader}
 import Musica._
 import scala.collection.mutable.ListBuffer
-import scala.util.matching.Regex
 
 case class Note(name: String)
 
-object RegexParser {
-  def parse(input: String): String = {
-    val pattern = """(\d{1,})x\Q(\E((\w|\s)+)\Q)\E""".r
-    val output = pattern.replaceAllIn(input, m => (m.group(2) + " ") * m.group(1).toInt) //Esta expresión hace los reemplazos
-                 .replaceAll("( )+", " ") //Esta simplemente remueve los espacios dobles
-    pattern.findFirstIn(output) match { //Si es necesario sigo llamando recursivamente a la función
-      case Some(i) => return this.parse(output)
-      case None => return output.trim
-    }
-  }
-}
-
-object Parser{
-  def anychar(palabra: String) = {
-    if(palabra != ""){
-    ( palabra.head , palabra.tail )
-    }else{
-      None
-    }
-    
-  }
-  def char(palabra: String , letra: Char) = {
-    if(palabra.head == letra)
-      this.anychar(palabra)
-  }
-  def digit(palabra: String) = {
-    palabra.head match{
-      case '0' => ( palabra.head , palabra.tail )
-      case '1' => ( palabra.head , palabra.tail )
-      case '2' => ( palabra.head , palabra.tail )
-      case '3' => ( palabra.head , palabra.tail )
-      case '4' => ( palabra.head , palabra.tail )
-      case '5' => ( palabra.head , palabra.tail )
-      case '6' => ( palabra.head , palabra.tail )
-      case '7' => ( palabra.head , palabra.tail )
-      case '8' => ( palabra.head , palabra.tail )
-      case '9' => ( palabra.head , palabra.tail )
-      case _ => None
-    }
-  }
-  def void(palabra: String) = ("",palabra.tail)
-  def letter(palabra: String) ={
-    if(palabra.head.isLetter){
-      (palabra.head , palabra.tail)
-    }else{
-       None
-    }  
-  }
-  def alphaNum(palabra: String) ={
-    if(palabra.head.isLetterOrDigit){
-      (palabra.head , palabra.tail)
-    }else{
-      None
-    }  
-  }
-}
-
-
 class MusicParser(input: String) {
-  protected val inputStream = new PushbackReader(new StringReader(RegexParser.parse(input)))
+  protected val inputStream = new PushbackReader(new StringReader(input))
 
   protected def parseChar(): Char = {
     val parsed = inputStream.read()

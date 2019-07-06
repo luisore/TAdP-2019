@@ -10,27 +10,6 @@ class MusicParserTest extends FreeSpec with Matchers {
     assertThrows[ParserException](actualResult)
   }
 
-  "RegexParser" - {
-    "when fed without any expresion" - {
-      "return same string" in {
-        assertParsesSucceededWithResult(RegexParser.parse("Hello World"), "Hello World")
-      }
-    }
-
-
-    "when fed with a simple expresion" - {
-      "return equivalent string" in {
-        assertParsesSucceededWithResult(RegexParser.parse("2x(A B C) D"), "A B C A B C D")
-      }
-    }
-
-    "when fed with multiple nested expresion" - {
-      "it just makes its magic" in {
-        assertParsesSucceededWithResult(RegexParser.parse("3x(2x(A B C) D) E F 3x(G H)"), "A B C A B C D A B C A B C D A B C A B C D E F G H G H G H")
-      }
-    }
-  }
-
   "MusicParser" - {
     "when fed empty text" - {
       "parses an empty list of notes" in {
