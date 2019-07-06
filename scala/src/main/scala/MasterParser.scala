@@ -63,8 +63,10 @@ class ParserWrapper(callback: (String) => ParserResult) {
   }
 
   //Métodos auxiliares
-  private def recursiveParsing[a](prevList: List[a], input: String): ParserResult = {
+  private def recursiveParsing[A](prevList: List[A], input: String): ParserResult = {
     this.apply(input) match {
+      //Este primer case lo agrego para que la lista quede con el tipo de h y no any, pero no se si funca
+      case ParserSuccess(h,t) if prevList.isEmpty => this.recursiveParsing(List(h), t)
       case ParserSuccess(h,t) => this.recursiveParsing(prevList.::(h), t)
       case _ => ParserSuccess(prevList, input)
     }
@@ -80,7 +82,7 @@ class ParserWrapper(callback: (String) => ParserResult) {
   def +(): ParserWrapper = {
     new ParserWrapper((input: String) => {
       this.apply(input) match {
-        case ParserSuccess(_,_) => this.recursiveParsing(List.empty[Any], input)
+        case ParserSuccess(h,_) => this.recursiveParsing(List(h), input)
         case _ => ParserFailure
       }
     })
@@ -96,11 +98,11 @@ class ParserWrapper(callback: (String) => ParserResult) {
     })
   }
 
-  def satisfies(condition: Any => Boolean): ParserWrapper = {
+  def satisfies[A](condition: A => Boolean): ParserWrapper = {
     new ParserWrapper((input: String) => {
       val res = this.apply(input)
       res match {
-        case ParserSuccess(h, _) if condition(h) => res
+        case ParserSuccess(h: A, _) if condition(h) => res
         case _ => ParserFailure
       }
     })
@@ -114,6 +116,15 @@ class ParserWrapper(callback: (String) => ParserResult) {
     new ParserWrapper((input: String) => {
       this.apply(input) match {
         case ParserSuccess(_, t) => ParserSuccess(value, t)
+        case _ => ParserFailure
+      }
+    })
+  }
+
+  def map (tFunction: PartialFunction[Any, Any]): ParserWrapper = {
+    new ParserWrapper((input: String) => {
+      this.apply(input) match {
+        case ParserSuccess(h, t) if tFunction.isDefinedAt(h) => ParserSuccess(tFunction(h), t)
         case _ => ParserFailure
       }
     })
@@ -184,7 +195,6 @@ object MasterParser extends App {
       }
     })
   }
-  
 
   val parserJ = char('j')
   val parserI = char('i')
@@ -199,11 +209,13 @@ object MasterParser extends App {
   val JleftI = parserJ <~ parserI
   val parserJkleene = parserJ.*
   val parserJmas = parserJ.+
-  val parserJmasConCondicion = parserJmas.satisfies((aList: Any) => {
-    aList.isInstanceOf[List[_]] && aList.asInstanceOf[List[_]].length > 1
+  val parserJmasConCondicion = parserJmas.satisfies((aList: List[Any]) => {
+    aList.length > 1
   })
   val saludoSep = saludo.sepBy(char('-'))
   val saludoSepMinion = saludoSep.const("BANANA")
+  val saludoMayusculas = saludo.map {case sld: String => sld.toUpperCase()}
+  //val saludoMayusculas = saludo.
   println(JoI("ijaaah"))  //ParserSuccess(i,jaaah)
   println(JoI("jijaaah")) //ParserSuccess(j,ijaaah)
   println(JoI("aaah"))    //ParserFailure
@@ -229,4 +241,5 @@ object MasterParser extends App {
   println(saludoSep("hola hola hola chau")) //ParserSuccess(List(hola), hola hola chau)
   println(saludoSep("chau-hola")) //ParserFailure
   println(saludoSepMinion("hola chau")) //ParserSuccess(BANANA, chau)
+  println(saludoMayusculas("hola"))
 }
