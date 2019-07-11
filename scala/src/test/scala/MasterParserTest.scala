@@ -52,7 +52,7 @@ class MasterParserTest extends FreeSpec with Matchers {
     }
     "Combinator OR, de tres Char  'A' , 'B' y  'C' respectivamente, con la operación opt" - {
       "Se le pasa 'XXX' y retorna  'XXX' " in {
-        assertParsesSucceededWithResult( OrCharACharBCharC.opt() ("XXX") , ParserSuccess((),"XXX"))
+        assertParsesSucceededWithResult( OrCharACharBCharC.opt ("XXX") , ParserSuccess((),"XXX"))
       }
     }
     "Parser String que paresea 'Hola' "- {
@@ -102,29 +102,30 @@ class MasterParserTest extends FreeSpec with Matchers {
     }
     "Parser Char que parsea 'A' operado con clausura de Kleene"- {
       "Se le pasa 'ABCD' y retorna (List(A),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.*() ("ABCD"), ParserSuccess(List('A'),"BCD"))
+        assertParsesSucceededWithResult(parseoUnaA.* ("ABCD"), ParserSuccess(List('A'),"BCD"))
       }
     }
     "Parser Char que parsea 'A' operado con clausura de Kleene"- {
       "Se le pasa 'AAABCD' y retorna (List(A,A,A),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.*() ("AAABCD"), ParserSuccess(List('A','A','A'),"BCD"))
+        assertParsesSucceededWithResult(parseoUnaA.* ("AAABCD"), ParserSuccess(List('A','A','A'),"BCD"))
       }
     }
     "Parser Char que parsea 'A' operado con clausura de Kleene"- {
       "Se le pasa 'BCDE' y retorna (List(),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.*() ("BCDE"), ParserSuccess(List(),"BCDE"))
+        assertParsesSucceededWithResult(parseoUnaA.* ("BCDE"), ParserSuccess(List(),"BCDE"))
       }
     }
     "Parser Char que parsea 'A' operado con clausura de Kleene positiva"- {
       "Se le pasa 'ABCD' y retorna (List(A),BCD)" in {
-        assertParsesSucceededWithResult(parseoUnaA.+() ("ABCD"), ParserSuccess(List('A'),"BCD"))
+        assertParsesSucceededWithResult(parseoUnaA.+ ("ABCD"), ParserSuccess(List('A'),"BCD"))
       }
     }
     "Parser Char que parsea 'A' operado con clausura de Kleene positiva"- {
       "Se le pasa 'BCDE' y falla" in {
-        assertParsesSucceededWithResult(parseoUnaA.+() ("BCDE"), ParserFailure)
+        assertParsesSucceededWithResult(parseoUnaA.+ ("BCDE"), ParserFailure)
       }
     }
+
     "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
       "Se le pasa 'Hola' y retorna (List(Hola),)" in {
         assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Hola"), ParserSuccess(List("Hola"),""))
@@ -141,8 +142,9 @@ class MasterParserTest extends FreeSpec with Matchers {
       }
     }
     "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
-      "Se le pasa 'Chau-Hola' y falla" in {
-        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Chau-Hola"), ParserFailure)
+      "Se le pasa 'Chau-Hola' y NO! falla" in {
+        // Chau-Hola debería funcionar, revisen el ejemplo del doc del TP
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Chau-Hola"), ParserSuccess(List("Hola", "Chau"), ""))
       }
     }
     "Parser String que parsea 'Hola' operado con Const y el string 'Banana'" - {
