@@ -52,7 +52,7 @@ class MasterParserTest extends FreeSpec with Matchers {
     }
     "Combinator OR, de tres Char  'A' , 'B' y  'C' respectivamente, con la operación opt" - {
       "Se le pasa 'XXX' y retorna  'XXX' " in {
-        assertParsesSucceededWithResult( OrCharACharBCharC.opt ("XXX") , ParserSuccess((),"XXX"))
+        assertParsesSucceededWithResult( OrCharACharBCharC.opt ("XXX") , ParserSuccess(None,"XXX"))
       }
     }
     "Parser String que paresea 'Hola' "- {
