@@ -144,7 +144,9 @@ class MasterParserTest extends FreeSpec with Matchers {
     "Parser String que parsea 'Hola' operado con SepBy y un parser char -"- {
       "Se le pasa 'Chau-Hola' y NO! falla" in {
         // Chau-Hola debería funcionar, revisen el ejemplo del doc del TP
-        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Chau-Hola"), ParserSuccess(List("Hola", "Chau"), ""))
+        // RESPUESTA: este test DEBE fallar, le estoy pidiendo que parsee "Hola" y lo primero que encuentra es "chau"
+        // Eso o estoy entendiendo el enunciado para el tujes
+        assertParsesSucceededWithResult(parseoHola.sepBy(parseoGuion)("Chau-Hola"), ParserFailure)
       }
     }
     "Parser String que parsea 'Hola' operado con Const y el string 'Banana'" - {

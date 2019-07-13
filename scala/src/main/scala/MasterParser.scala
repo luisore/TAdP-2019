@@ -97,18 +97,6 @@ package object MasterParser {
           // case ParserSuccess(h,t) if prevList.isEmpty => this.recursiveParsing(List(h), t)
 
           // No es necesario, Nil o List.empty puede ser usado como "terminador" de listas:
-  //      scala> List(1) :+ 2
-  //      res0: List[Int] = List(1, 2)
-  //
-  //      scala> Nil :+ 1
-  //      res1: List[Int] = List(1)
-  //
-  //      scala> List.empty :+ 1
-  //      res2: List[Int] = List(1)
-  //
-  //      scala> 2 :: Nil
-  //      res4: List[Int] = List(2)
-
           case ParserSuccess(h, t) => recursiveParsing(prevList :+ h, t)
           case _ => ParserSuccess(prevList, input)
         }
@@ -120,13 +108,6 @@ package object MasterParser {
     }
 
     def + : ParserWrapper[List[A]] = {
-      // Nota: se repite la lógica del anterior, para evitarlo podemos hacer:
-//      new ParserWrapper((input: String) => {
-//        this.apply(input) match {
-//          case ParserSuccess(h, _) => recursiveParsing(List.empty, input)
-//          case _ => ParserFailure
-//        }
-//      })
       new ParserWrapper((input: String) => {
         *(input) match {
           case ParserSuccess(Nil, _) => ParserFailure
@@ -163,12 +144,7 @@ package object MasterParser {
     }
 
     def const[B](value: B): ParserWrapper[B] = {
-      new ParserWrapper((input: String) => {
-        this.apply(input) match {
-          case ParserSuccess(_, t) => ParserSuccess(value, t)
-          case _ => ParserFailure
-        }
-      })
+      this.map {case a => value}
     }
 
     // Nota: Por lo general, "map" está definido para usarse con funciones completas
@@ -185,30 +161,6 @@ package object MasterParser {
 
 
   //Parsers básicos
-  val digit: ParserWrapper[Char] = {
-    new ParserWrapper((input: String) => {
-      input.headOption match {
-        // No es necesario castear, la inferencia se hace cargo
-        // case Some(a) if a.isDigit => ParserSuccess[Int](a.asDigit, input.drop(1))
-        // Igualmente, en este caso el enunciado pide por un "char" como resultado
-        case Some(a) if a.isDigit => ParserSuccess(a, input.drop(1))
-        case _ => ParserFailure
-      }
-    })
-  }
-
-  val integer = digit.map(_.asDigit)
-
-  // TODO: "char" es muy muy parecido a anyChar salvo que tiene que "satisfacer" una condición para que sea exitoso... y si acá usan el combinator satisfies?
-  def char(aChar: Char): ParserWrapper[Char] = {
-    new ParserWrapper((input: String) => {
-      input.headOption match {
-        case Some(a) if a == aChar => ParserSuccess[Char](input.head, input.drop(1))
-        case _ => ParserFailure
-      }
-    })
-  }
-  
   val anychar: ParserWrapper[Char] = {
     new ParserWrapper((input: String) => {
       input.headOption match {
@@ -217,25 +169,21 @@ package object MasterParser {
       }
     })
   }
-  
-  val letter: ParserWrapper[Char] = {
-    new ParserWrapper((input: String) => {
-      input.headOption match {
-        case Some(a) if a.isLetter => ParserSuccess[Char](input.head, input.drop(1))
-        case _ => ParserFailure
-      }
-    })
+
+  val digit: ParserWrapper[Char] = {
+    anychar.satisfies((inputChar: Char) => {inputChar.isDigit})
   }
 
-  // IMPORTANTE: ya tenían definido letter y digit... usen los combinators y no lo vuelvan a definir de cero!
-//  def alphaNum: ParserWrapper[Char] = {
-//    new ParserWrapper((input: String) => {
-//      input.headOption match {
-//        case Some(a) if a.isLetterOrDigit => ParserSuccess[Char](input.head, input.drop(1))
-//        case _ => ParserFailure
-//      }
-//    })
-//  }
+  //Modifico la definición para que soporte integers de más de un dígito
+  val integer = digit.+.map(_.map(_.toString).mkString("").toInt)
+
+  def char(aChar: Char): ParserWrapper[Char] = {
+    anychar.satisfies((inputChar: Char) => {inputChar == aChar})
+  }
+  
+  val letter: ParserWrapper[Char] = {
+    anychar.satisfies((inputChar: Char) => {inputChar.isLetter})
+  }
 
   val alphaNum = letter <|> digit
 

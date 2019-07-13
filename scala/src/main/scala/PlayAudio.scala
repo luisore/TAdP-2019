@@ -11,38 +11,6 @@ object PlayAudio extends App {
 
   //Sonidos
   val octava = integer
-//  val notaIndividual = char('A') <|> char('B') <|> char('C') <|> char('D') <|> char('E') <|> char('F') <|> char('G')
-//  val modificador = char('#') <|> char('b')
-//  //Esto no es muy elegante pero es la 1:30 de la mañana y no se como invocar un objeto a partir de un char
-//  val nota: ParserWrapper[Nota] = (notaIndividual <> modificador.opt).map {
-//    case (n, Some('#')) => n match {
-//      case 'A' => A.sostenido
-//      case 'B' => B.sostenido
-//      case 'C' => C.sostenido
-//      case 'D' => D.sostenido
-//      case 'E' => E.sostenido
-//      case 'F' => F.sostenido
-//      case 'G' => G.sostenido
-//    }
-//    case (n, Some('b')) => n match {
-//      case 'A' => A.bemol
-//      case 'B' => B.bemol
-//      case 'C' => C.bemol
-//      case 'D' => D.bemol
-//      case 'E' => E.bemol
-//      case 'F' => F.bemol
-//      case 'G' => G.bemol
-//    }
-//    case (n, None) => n match {
-//      case 'A' => A
-//      case 'B' => B
-//      case 'C' => C
-//      case 'D' => D
-//      case 'E' => E
-//      case 'F' => F
-//      case 'G' => G
-//    }
-//  }
 
   // De forma más corta:
   val charToNota = Map(
@@ -102,7 +70,7 @@ object PlayAudio extends App {
   val felizCumple = "4C1/4 4C1/4 4D1/2 4C1/4 4F1/2 4E1/2 4C1/8 4C1/4 4D1/2 4C1/2 4G1/2 4F1/2 4C1/8 4C1/4 5C1/2 4A1/2 4F1/8 4F1/4 4E1/2 4D1/2"
   val bonus = "4AM1/8 5C1/8 5C#1/8 5C#1/8 5D#1/8 5C1/8 4A#1/8 4G#1/2 - 4A#1/8 4A#1/8 5C1/4 5C#1/8 4A#1/4 4G#1/2 5G#1/4 5G#1/4 5D#1/2"
   //println(tema(felizCumple))
-  println(tema(bonus))
+  //println(tema(bonus))
 
   //  Ahora convertir la partitura a la melodía y pasarle eso al AudioPlayer les toca hacerlo a ustedes.
 
@@ -111,4 +79,5 @@ object PlayAudio extends App {
     case _ => println("error")
   }
 
+  println(integer("16"))
 }
