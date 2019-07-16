@@ -60,6 +60,7 @@ class MusicParserTest extends FreeSpec with Matchers {
 
       "when fed an expresion" - {
         "parses a list with the equivalent notes" in {
+
           assertParsesSucceededWithResult(new MusicParser("2x(3x(A) B) C 4x(D)").parse(), List(A, A, A, B, A, A, A, B, C, D, D, D, D))
         }
       }

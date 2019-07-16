@@ -60,7 +60,7 @@ package object MasterParser {
 
     //RightmostCombinator
     // Este combinator descarta lo que consume "this" y retorna B
-    def ~>[B](after: ParserWrapper[B]): ParserWrapper[B] = {
+    def ~>[B](after: => ParserWrapper[B]): ParserWrapper[B] = {
       new ParserWrapper((input: String) => {
         val res = this.apply(input)
         res match {
@@ -170,20 +170,17 @@ package object MasterParser {
     })
   }
 
-  val digit: ParserWrapper[Char] = {
-    anychar.satisfies((inputChar: Char) => {inputChar.isDigit})
-  }
+  val digit: ParserWrapper[Char] =
+    anychar.satisfies(_.isDigit)
 
   //Modifico la definición para que soporte integers de más de un dígito
-  val integer = digit.+.map(_.map(_.toString).mkString("").toInt)
+  val integer: ParserWrapper[Int] = digit.+.map(_.map(_.toString).mkString("").toInt)
 
-  def char(aChar: Char): ParserWrapper[Char] = {
-    anychar.satisfies((inputChar: Char) => {inputChar == aChar})
-  }
+  def char(aChar: Char): ParserWrapper[Char] =
+    anychar.satisfies(_ == aChar)
   
-  val letter: ParserWrapper[Char] = {
-    anychar.satisfies((inputChar: Char) => {inputChar.isLetter})
-  }
+  val letter: ParserWrapper[Char] =
+    anychar.satisfies(_.isLetter)
 
   val alphaNum = letter <|> digit
 
