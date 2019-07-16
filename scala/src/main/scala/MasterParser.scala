@@ -138,14 +138,11 @@ package object MasterParser {
       })
     }
 
-    // Error de lógica, el sepBy no funciona como está definido aca, revisar la info del TP (y el test corregido)
-    def sepBy[B](sep: ParserWrapper[B]): ParserWrapper[List[A]] = {
+    def sepBy(sep: ParserWrapper[_]): ParserWrapper[List[A]] =
       (this <~ sep.opt).+
-    }
 
-    def const[B](value: B): ParserWrapper[B] = {
-      this.map {case a => value}
-    }
+    def const[B](value: B): ParserWrapper[B] =
+      this.map(_ => value)
 
     // Nota: Por lo general, "map" está definido para usarse con funciones completas
     def map[B](tFunction: A => B): ParserWrapper[B] = {
